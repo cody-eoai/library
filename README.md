@@ -12,10 +12,12 @@ It gives an agent a place to look before it acts:
 - `projects/` for long-lived work
 - `experiments/` for short-lived spikes
 - `people/` for durable, public-safe notes about collaborators
+- `knowledge-base/` for linked, structured reference material (SOPs,
+  articles)
 - `archive/` for completed or retired work
 - `templates/` for the starter files everything else scaffolds from
-- `tmp/` and `output/` for scratch space that is gitignored on purpose —
-  see "Everything Has A Place" in `AGENTS.md`
+- `tmp/` for scratch space that is gitignored on purpose — see "Everything
+  Has A Place" in `AGENTS.md`
 
 ## Why this exists
 
@@ -33,25 +35,42 @@ true instead:
    is what Claude Code actually reads, kept as symlinks into the other two
    so there's one copy of the content, not three.
 3. **Every file has a place.** Durable work lives under `projects/`,
-   `experiments/`, `people/`, or `archive/`. `tmp/` and `output/` are
+   `experiments/`, `people/`, `knowledge-base/`, or `archive/`. `tmp/` is
    scratch — gitignored, never a home for anything you want to keep.
 
 ## Setup
+
+### Option 1: git clone (recommended if you'll contribute back)
 
 ```sh
 git clone <this-repo-url>
 cd library
 ```
 
-Open it in Claude Code or Codex and start working — both read `AGENTS.md`
-from the root.
+### Option 2: download the zip (no git required)
+
+```sh
+curl -L https://github.com/cody-eoai/library/releases/latest/download/library.zip -o library.zip
+unzip library.zip -d library
+cd library
+```
+
+On macOS you can use `ditto -x -k library.zip library` instead of `unzip`.
+Every version tag (`vX.Y.Z`) repackages this zip via
+`.github/workflows/release.yml` — `releases/latest/download/library.zip`
+always points at the newest tagged release.
+
+Either way: open the folder in Claude Code or Codex and start working —
+both read `AGENTS.md` from the root.
 
 ### Adding skills
 
-`.agents/skills/` and `skills-lock.json` start empty. To add a skill from
-an external source, install it under `.agents/skills/<name>/`, record where
-it came from in `skills-lock.json` (source repo, path, content hash), then
-expose it to Claude Code:
+`.agents/skills/` holds two kinds of skill. **Repo-native** skills are
+authored in this repo — `librarian` is one — no lock entry needed, they
+*are* the source. **Externally-sourced** skills are pulled in from
+elsewhere: install one under `.agents/skills/<name>/`, record where it came
+from in `skills-lock.json` (source repo, path, content hash), then expose
+it to Claude Code:
 
 ```sh
 ln -s ../../.agents/skills/<name> .claude/skills/<name>
@@ -66,9 +85,16 @@ way only if it's actually useful there:
 ln -s ../../.codex/skills/<name> .claude/skills/<name>
 ```
 
-Two example skills ship with this template — `new-project` and
-`new-person` — both already wired up under `.codex/skills/` and mirrored to
-`.claude/skills/`.
+Four skills ship with this template, all already wired up:
+
+- `new-project` (`.codex/skills/`) — bootstrap a `projects/<slug>/`.
+- `new-experiment` (`.codex/skills/`) — bootstrap an
+  `experiments/exp-<slug>-YYYY-MM-DD/`.
+- `new-person` (`.codex/skills/`) — bootstrap a `people/<slug>.md`.
+- `librarian` (`.agents/skills/`) — process dumped material (reference
+  implementation: Raindrop) into linked, categorized `knowledge-base/*.mmd`
+  entries (reference categorizer: `typesafe-ai`'s Jev). See
+  `knowledge-base/README.md` for the entry shape.
 
 ## Structure
 
@@ -77,19 +103,25 @@ Two example skills ship with this template — `new-project` and
 - `experiments/`: short-lived spikes, named `exp-<topic>-YYYY-MM-DD`.
 - `people/`: notes about collaborators, human or agent. Keep this
   public-safe — see `people/README.md`.
+- `knowledge-base/`: linked, structured reference material — see
+  `knowledge-base/README.md`.
 - `archive/`: completed or retired work.
 - `templates/`: starter files (`project_README.md`, `experiment_README.md`,
   `PROJECT_AGENTS.md`, `GOAL.md`, `RESULT.md`, `people/person.md`,
-  `people/agent.md`).
-- `tests/`: repo-integrity checks (`test_skills.py` verifies every
-  markdown file carries a `last_edited` date and every Codex skill's
-  frontmatter has the right shape).
+  `people/agent.md`, `kb_entry.mmd`).
+- `tests/`: repo-integrity checks — `test_skills.py` verifies every
+  markdown file carries a `last_edited` date and every repo-native skill's
+  frontmatter has the right shape; `test_knowledge_base.py` verifies every
+  `knowledge-base/*.mmd` entry has the required fields and that every
+  `related` link is recorded on both sides.
 - `.agents/`, `.codex/`, `.claude/`: skills, per the "Adding skills" section
   above.
+- `.github/workflows/release.yml`: packages `library.zip` on every version
+  tag — what Option 2 above downloads.
 
 ## Credit
 
 Structurally descended from
 [`jxnl/personal-monorepo-template`](https://github.com/jxnl/personal-monorepo-template),
 with Claude Code skill support, the single-`AGENTS.md` convention, and the
-`tmp`/`output` scratch-space rule added on top.
+`tmp` scratch-space rule added on top.
