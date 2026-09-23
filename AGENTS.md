@@ -53,10 +53,12 @@ Every file belongs somewhere on purpose:
 - `people/` — durable, public-safe notes about collaborators (human or agent).
 - `archive/` — completed or retired work, moved here instead of deleted.
 - `templates/` — the starter files this repo scaffolds new entries from.
-- `tmp/` and `output/` — scratch space only. Both are gitignored: nothing
-  placed there is expected to survive or ship. If something in `tmp/` or
-  `output/` turns out to matter, move it into `projects/`, `archive/`, or
-  wherever it actually belongs — do not leave durable state in scratch dirs.
+- `knowledge-base/` — durable, linked reference material (SOPs, articles);
+  see `knowledge-base/README.md`.
+- `tmp/` — scratch space only. Gitignored: nothing placed there is expected
+  to survive or ship. If something in `tmp/` turns out to matter, move it
+  into `projects/`, `archive/`, `knowledge-base/`, or wherever it actually
+  belongs — do not leave durable state in a scratch dir.
 
 Nothing durable lives loose at the repo root. If you're about to create a
 file and none of the above feels right, stop and ask where it should go
@@ -81,9 +83,15 @@ Do not leave decisions only in chat when they will matter later.
 - When creating a new project, use the `new-project` skill
   (`.codex/skills/new-project`, mirrored at `.claude/skills/new-project`) or
   follow `templates/project_README.md` and `templates/PROJECT_AGENTS.md`.
+- When starting a new experiment, use the `new-experiment` skill
+  (`.codex/skills/new-experiment`, mirrored at
+  `.claude/skills/new-experiment`) or follow
+  `templates/experiment_README.md`.
 - When creating a new person note, use the `new-person` skill
   (`.codex/skills/new-person`, mirrored at `.claude/skills/new-person`) or
   follow `people/person.md`.
+- When processing new knowledge-base material, use the `librarian` skill
+  (`.agents/skills/librarian`, mirrored at `.claude/skills/librarian`).
 - Update the relevant project or experiment `README.md` when adding,
   archiving, renaming, or changing the status of work.
 - Before editing, read enough surrounding context to understand the local
@@ -114,14 +122,18 @@ Do not leave decisions only in chat when they will matter later.
 Skills are meant to be read and used in place. Do not assume they are
 installed globally.
 
-- `.agents/skills/` is the agent-neutral home for skills pulled from
-  external sources. `skills-lock.json` tracks where each one came from
-  (source repo, path, content hash) so it can be re-synced. It starts empty
-  in this template — add skills the same way you'd add any other dependency.
+- `.agents/skills/` is the agent-neutral home for skills, and holds two
+  kinds. **Repo-native** skills are authored in this repo (`librarian` is
+  one) — no lock entry, they *are* the source. **Externally-sourced**
+  skills are pulled in from elsewhere; `skills-lock.json` tracks where each
+  one came from (source repo, path, content hash) so it can be re-synced,
+  and a skill listed there is left as-is by the frontmatter-shape test since
+  it's vendored content this repo doesn't own. `skills-lock.json` starts
+  empty — add external skills the same way you'd add any other dependency.
 - `.codex/skills/` holds Codex-specific skills. Most only make sense under
   Codex (a persistent assistant persona, thread heartbeats, goal trees) and
-  stay there. `new-project` and `new-person` are plain repo-bootstrapping,
-  so they're also mirrored to Claude Code.
+  stay there. `new-project`, `new-person`, and `new-experiment` are plain
+  repo-bootstrapping, so they're also mirrored to Claude Code.
 - `.claude/skills/` is what Claude Code actually reads. Claude Code has no
   native way to "import" skills from elsewhere, so every skill it should see
   needs an actual entry here — this template uses a symlink into

@@ -1,11 +1,19 @@
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def locked_skill_names() -> set[str]:
+    lock_path = ROOT / "skills-lock.json"
+    if not lock_path.exists():
+        return set()
+    return set(json.loads(lock_path.read_text()).get("skills", {}))
 
 
 def frontmatter(path: Path) -> dict[str, object]:
@@ -38,7 +46,18 @@ def test_markdown_has_last_edited_frontmatter() -> None:
 
 
 def test_skill_frontmatter_shape() -> None:
-    skill_files = sorted((ROOT / ".codex" / "skills").glob("*/SKILL.md"))
+    """Every repo-native skill (not tracked in skills-lock.json) must carry
+    the same {name, description, last_edited} frontmatter. Externally-sourced
+    skills are vendored content this repo doesn't own, so they're exempt."""
+    locked = locked_skill_names()
+    skill_files = sorted(
+        skill_dir / "SKILL.md"
+        for parent in ("agents", "codex")
+        for skill_dir in (ROOT / f".{parent}" / "skills").glob("*")
+        if skill_dir.is_dir()
+        and skill_dir.name not in locked
+        and (skill_dir / "SKILL.md").exists()
+    )
     assert skill_files
     for path in skill_files:
         data = frontmatter(path)

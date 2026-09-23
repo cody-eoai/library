@@ -12,5 +12,3 @@ __pycache__/
 # into projects/, archive/, or wherever it actually belongs.
 tmp/*
 !tmp/.gitkeep
-output/*
-!output/.gitkeep
