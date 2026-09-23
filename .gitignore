@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Scratch space only — see "Everything Has A Place" in AGENTS.md.
+# Nothing here is expected to survive; move anything worth keeping
+# into projects/, archive/, or wherever it actually belongs.
+tmp/*
+!tmp/.gitkeep
+output/*
+!output/.gitkeep
