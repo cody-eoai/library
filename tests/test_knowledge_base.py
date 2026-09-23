@@ -11,7 +11,7 @@ REQUIRED_FIELDS = {
     "type",
     "source",
     "saved_from",
-    "raindrop_bookmark_id",
+    "source_id",
     "category",
     "tags",
     "related",

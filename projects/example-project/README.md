@@ -1,5 +1,5 @@
 ---
-last_edited: 2026-06-15
+last_edited: 2026-09-23
 ---
 
 # Example Project
@@ -27,4 +27,4 @@ No runtime. This is documentation-only.
 
 ## Notes
 
-Use `.codex/skills/new-project` when creating future projects.
+Use `.agents/skills/new-project` when creating future projects.

@@ -4,125 +4,112 @@ last_edited: 2026-09-23
 
 # Library
 
-A starter workspace for people who work alongside coding agents — Claude
-Code, Codex, or both — across several projects at once.
-
-It gives an agent a place to look before it acts:
-
-- `projects/` for long-lived work
-- `experiments/` for short-lived spikes
-- `people/` for durable, public-safe notes about collaborators
-- `knowledge-base/` for linked, structured reference material (SOPs,
-  articles)
-- `archive/` for completed or retired work
-- `templates/` for the starter files everything else scaffolds from
-- `tmp/` for scratch space that is gitignored on purpose — see "Everything
-  Has A Place" in `AGENTS.md`
-
-## Why this exists
-
-Most agent-instruction files degrade into a pile of dos-and-don'ts that only
-make sense to whoever wrote them. This template tries to keep three things
-true instead:
-
-1. **One instruction file.** `AGENTS.md` is the single source of truth for
-   every agent — Claude Code reads it natively when no `CLAUDE.md` is
-   present, Codex reads it as its root instructions. No forked, drifting
-   copies per tool.
-2. **Skills work the same way regardless of which agent you're using.**
-   `.agents/skills/` is the agent-neutral home for anything you pull in from
-   elsewhere; `.codex/skills/` holds Codex-specific skills; `.claude/skills/`
-   is what Claude Code actually reads, kept as symlinks into the other two
-   so there's one copy of the content, not three.
-3. **Every file has a place.** Durable work lives under `projects/`,
-   `experiments/`, `people/`, `knowledge-base/`, or `archive/`. `tmp/` is
-   scratch — gitignored, never a home for anything you want to keep.
+A starter workspace for people who work alongside coding agents (Claude
+Code, Codex, or both) across several projects at once. It gives an agent a
+place to look before it acts, and gives every file a home.
 
 ## Setup
 
-### Option 1: git clone (recommended if you'll contribute back)
+### 1. Get a copy
+
+With git:
 
 ```sh
-git clone <this-repo-url>
+git clone https://github.com/cody-eoai/library.git
 cd library
 ```
 
-### Option 2: download the zip (no git required)
-
-Easiest: on the repo's GitHub page, **Code → Download ZIP**.
-
-From a terminal, using GitHub's own archive endpoint (works for any branch,
-no extra tooling on GitHub's side to maintain):
+Or as a zip, no git needed: on GitHub, **Code → Download ZIP**, or from a
+terminal:
 
 ```sh
 gh api repos/cody-eoai/library/zipball/main > library.zip
-unzip library.zip
-cd cody-eoai-library-*
+unzip library.zip && mv cody-eoai-library-* library && cd library
 ```
 
-(`gh` handles the download regardless of whether the repo is public or
-private. Once it's public, a plain `curl -L -o library.zip https://github.com/cody-eoai/library/archive/refs/heads/main.zip` works too, no auth needed.)
+### 2. Run first-time setup
 
-Either way: open the folder in Claude Code or Codex and start working —
-both read `AGENTS.md` from the root.
+Open the folder in Claude Code and run `/setup-library`, or in Codex ask
+it to "set up this library". It will ask a few questions, personalise
+`AGENTS.md`, create your real projects, and check everything works.
 
-### Adding skills
+### Windows
 
-`.agents/skills/` holds two kinds of skill. **Repo-native** skills are
-authored in this repo — `librarian` is one — no lock entry needed, they
-*are* the source. **Externally-sourced** skills are pulled in from
-elsewhere: install one under `.agents/skills/<name>/`, record where it came
-from in `skills-lock.json` (source repo, path, content hash), then expose
-it to Claude Code:
+`.claude/skills/` is made of symlinks. Git on Windows checks them out as
+plain text files unless symlinks are enabled, and then Claude Code can't
+find any skills. Before cloning, enable Developer Mode and run
+`git config --global core.symlinks true`. The zip has the same problem
+on Windows, so use git there. `python -m pytest tests` will tell you if
+the links are broken.
+
+## How it's organised
+
+| Folder | What goes there |
+| --- | --- |
+| `projects/` | Long-lived work. `projects/example-project/` shows the layout. |
+| `experiments/` | Short-lived spikes, named `exp-<topic>-YYYY-MM-DD`. |
+| `people/` | Public-safe notes about collaborators (see `people/README.md`). |
+| `knowledge-base/` | Linked reference material; drop raw items in `inbox/` (see `knowledge-base/README.md`). |
+| `archive/` | Finished or retired work. |
+| `templates/` | Starter files: project, experiment, goal, result, and knowledge-base entry. `people/` has its own `person.md` and `agent.md`. |
+| `tmp/` | Gitignored scratch space. Nothing here is kept. |
+| `tests/` | Checks that keep the structure honest (below). |
+
+## Skills
+
+| Skill | What it does |
+| --- | --- |
+| `setup-library` | First-run setup for a fresh copy. |
+| `new-project` | Creates `projects/<slug>/` from the templates. |
+| `new-experiment` | Creates `experiments/exp-<slug>-YYYY-MM-DD/`. |
+| `new-person` | Creates `people/<slug>.md`. |
+| `librarian` | Files everything in `knowledge-base/inbox/` (and, optionally, Raindrop) into linked `.mmd` entries. |
+
+Every skill lives once, in `.agents/skills/<name>/`. Codex reads that
+folder directly. Claude Code only reads `.claude/skills/`, so each skill
+also has a symlink there. To add your own:
 
 ```sh
+mkdir -p .agents/skills/<name>        # write .agents/skills/<name>/SKILL.md
 ln -s ../../.agents/skills/<name> .claude/skills/<name>
 ```
 
-A Codex-specific skill (one that only makes sense under Codex — a
-persistent assistant persona, thread automations) goes in
-`.codex/skills/<name>/` instead, and is mirrored to Claude Code the same
-way only if it's actually useful there:
+**Skills from elsewhere.** If you install someone else's skill into
+`.agents/skills/`, add its name to `skills-lock.json` under `"skills"`.
+The frontmatter test skips anything listed there, since you don't own
+that content. If your installer writes this file for you, leave it to
+the installer.
+
+## Tests
 
 ```sh
-ln -s ../../.codex/skills/<name> .claude/skills/<name>
+pip install pytest
+python -m pytest tests
 ```
 
-Four skills ship with this template, all already wired up:
+- `test_skills.py`: every markdown file carries a `last_edited` date,
+  every skill of your own has the same frontmatter shape, and every skill
+  is linked into `.claude/skills/`.
+- `test_knowledge_base.py`: every knowledge-base entry has the required
+  fields, and every `related` link is recorded on both sides.
 
-- `new-project` (`.codex/skills/`) — bootstrap a `projects/<slug>/`.
-- `new-experiment` (`.codex/skills/`) — bootstrap an
-  `experiments/exp-<slug>-YYYY-MM-DD/`.
-- `new-person` (`.codex/skills/`) — bootstrap a `people/<slug>.md`.
-- `librarian` (`.agents/skills/`) — process dumped material (reference
-  implementation: Raindrop) into linked, categorized `knowledge-base/*.mmd`
-  entries (reference categorizer: `typesafe-ai`'s Jev). See
-  `knowledge-base/README.md` for the entry shape.
+They also run on every push via `.github/workflows/test.yml`.
 
-## Structure
+## Design choices
 
-- `projects/`: long-lived work. `projects/example-project/` shows the
-  default layout.
-- `experiments/`: short-lived spikes, named `exp-<topic>-YYYY-MM-DD`.
-- `people/`: notes about collaborators, human or agent. Keep this
-  public-safe — see `people/README.md`.
-- `knowledge-base/`: linked, structured reference material — see
-  `knowledge-base/README.md`.
-- `archive/`: completed or retired work.
-- `templates/`: starter files (`project_README.md`, `experiment_README.md`,
-  `PROJECT_AGENTS.md`, `GOAL.md`, `RESULT.md`, `people/person.md`,
-  `people/agent.md`, `kb_entry.mmd`).
-- `tests/`: repo-integrity checks — `test_skills.py` verifies every
-  markdown file carries a `last_edited` date and every repo-native skill's
-  frontmatter has the right shape; `test_knowledge_base.py` verifies every
-  `knowledge-base/*.mmd` entry has the required fields and that every
-  `related` link is recorded on both sides.
-- `.agents/`, `.codex/`, `.claude/`: skills, per the "Adding skills" section
-  above.
+- **One `AGENTS.md`, no `CLAUDE.md`.** Claude Code reads `AGENTS.md` when
+  there's no `CLAUDE.md`, and Codex reads it natively, so one file serves
+  both. Claude Code's docs call that fallback "not recommended for new
+  projects", but a second file would either duplicate this one and drift,
+  or depend on Claude choosing to open `AGENTS.md`. If Claude Code adds a
+  way to import one file into another, switch to a thin `CLAUDE.md` that
+  pulls `AGENTS.md` in.
+- **Symlinks, not copies.** Each skill exists once, so a `.claude/skills/`
+  copy can never fall out of date.
+- **One scratch folder.** Only `tmp/` is disposable. Everything else has a
+  named home, so nothing piles up at the root.
 
 ## Credit
 
 Structurally descended from
-[`jxnl/personal-monorepo-template`](https://github.com/jxnl/personal-monorepo-template),
-with Claude Code skill support, the single-`AGENTS.md` convention, and the
-`tmp` scratch-space rule added on top.
+[`jxnl/personal-monorepo-template`](https://github.com/jxnl/personal-monorepo-template).

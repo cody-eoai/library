@@ -1,60 +1,52 @@
 ---
 name: librarian
-description: Process new material into the knowledge base — convert to markdown, categorize, and link it to related entries. Use when the user asks to process their reading list, run the librarian, update the knowledge base, file new articles or SOPs, or organize what they've saved.
+description: Process new material into the knowledge base — convert to markdown, categorise, and link it to related entries. Use when the user asks to process their inbox or reading list, run the librarian, update the knowledge base, file new articles or SOPs, or organise what they've saved.
 last_edited: 2026-09-23
 ---
 
 # Librarian
 
-Turn dumped source material (a reading list, saved articles, written-up
-SOPs) into structured, linked entries under `knowledge-base/`. This is an
-agent-run skill: invoke it when you want the knowledge base processed —
-daily, weekly, or on demand — there is no unattended automation here.
-
-The reference implementation below pulls from Raindrop and categorizes with
-`typesafe-ai`'s Jev. Neither is a hard requirement: swap the source or the
-categorizer for whatever you actually have, as long as the output still
-matches the shape in `knowledge-base/README.md`.
+Turn raw material into structured, linked entries under `knowledge-base/`.
+Run it whenever there's something to file: daily, weekly, or on demand.
 
 ## Workflow
 
-1. **Read `knowledge-base/README.md`** for the current metadata shape
-   before writing anything.
-2. **Find what's new.** Pull unprocessed items from the dump source (e.g.
-   Raindrop bookmarks not yet represented by a `raindrop_bookmark_id` in
-   `knowledge-base/*.mmd`). If no source integration is configured, ask the
-   user for the items directly (URLs, pasted text, or files).
-3. **Convert to markdown.** Fetch each item's content and turn it into
-   clean markdown — strip navigation, ads, and boilerplate; keep the
-   substance.
-4. **Categorize and link.** For each item, determine:
+1. **Read `knowledge-base/README.md`** for the current entry shape.
+2. **Collect what's new.**
+   - Always: every item in `knowledge-base/inbox/` (except `.gitkeep`). A
+     `.txt` file of URLs is one item per URL; fetch each.
+   - Optionally: unprocessed Raindrop bookmarks, if a Raindrop connector
+     or API token is available in this session. Skip any bookmark whose ID
+     already appears as a `source_id` in `knowledge-base/*.mmd`.
+   - If both are empty, say so and stop.
+3. **Convert to markdown.** Keep the substance; strip navigation, ads,
+   cookie banners, and boilerplate.
+4. **Categorise and link.** For each item, decide:
    - `type`: `sop` or `article`.
-   - `category`: a single top-level grouping, consistent with categories
-     already in use in `knowledge-base/` — scan existing entries' `category`
-     values first rather than inventing near-duplicates.
+   - `category`: reuse a category already used in `knowledge-base/` where
+     one fits, rather than inventing a near-duplicate.
    - `tags`: free-form labels.
-   - `related`: existing entries this one is meaningfully connected to.
+   - `related`: existing entries this one is genuinely connected to. An
+     empty list is a correct answer; don't force links.
 
-   Use `/typesafe:typesafe-ai` (Jev) for this when it's available in the
-   session; otherwise use your own judgment from the converted content and
-   the existing entries' titles/descriptions. Do not force a `related` link
-   that isn't genuinely there — an empty list is a correct result.
-5. **Write the entry.** Copy `templates/kb_entry.mmd` into
+   Use `/typesafe:typesafe-ai` (Jev) for this if it's available in the
+   session. Otherwise, judge from the content and the existing entries'
+   titles and categories.
+5. **Write the entry.** Copy `templates/kb_entry.mmd` to
    `knowledge-base/<slug>.mmd` (lowercase-hyphenated slug from the title),
-   fill every field, and set `created`/`last_edited` to today. Keep `tags`
-   and `related` as single-line inline lists — `tags: ["a", "b"]`,
-   `related: ["other-entry-slug"]` — not multi-line YAML blocks; the repo's
-   frontmatter tooling only parses single-line `key: value` pairs.
-6. **Update the other side of every link.** For each filename listed in the
-   new entry's `related`, open that existing file and add the new entry's
-   slug to *its* `related` list too (if not already present), bumping its
-   `last_edited`. Links are bidirectional — see `knowledge-base/README.md`
-   for why.
-7. **Report.** List what was created, what got linked to what, and flag
-   anything you weren't confident categorizing so the user can fix it by
-   hand.
+   fill every field, and set `created` and `last_edited` to today. Keep
+   `tags` and `related` as single-line inline lists
+   (`related: ["other-entry"]`); the repo's tests only parse single-line
+   `key: value` frontmatter.
+6. **Update the other side of every link.** For each entry named in the
+   new entry's `related`, add the new slug to *that* entry's `related` (if
+   it isn't there already) and bump its `last_edited`.
+7. **Clear the inbox.** Delete each inbox item whose entry was written.
+   Leave anything that failed in `inbox/`.
+8. **Check.** Run `python -m pytest tests/test_knowledge_base.py` and fix
+   anything it flags before reporting.
 
 ## Output
 
-A summary of new entries written, links updated on both sides, and any
-low-confidence categorizations that need a human look.
+A short summary: entries created, links added (both sides), anything left
+in `inbox/` and why, and any categorisation you weren't confident about.

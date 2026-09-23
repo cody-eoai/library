@@ -1,7 +1,7 @@
 ---
 name: new-person
 description: Create or update a public-safe person note under `people/` from the repository's `people/person.md` template. Use when the user asks to add a collaborator, create a person profile, remember someone's preferences, make a people note, or bootstrap `people/<name>.md`.
-last_edited: 2026-06-15
+last_edited: 2026-09-23
 ---
 
 # New Person
@@ -15,7 +15,7 @@ Create a durable, public-safe note for a human collaborator.
 3. Run the helper when possible:
 
 ```sh
-python .codex/skills/new-person/scripts/new_person.py "Person Name" --role "Role or context"
+python .agents/skills/new-person/scripts/new_person.py "Person Name" --role "Role or context"
 ```
 
 4. Edit the generated note with only useful, non-sensitive context.

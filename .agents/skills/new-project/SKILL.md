@@ -1,7 +1,7 @@
 ---
 name: new-project
 description: Bootstrap a new project or experiment directory with README and optional `AGENTS.md` files. Use when the user asks to create a new project, start an experiment, add a workspace entry, scaffold a project folder, or bootstrap durable work in this personal monorepo.
-last_edited: 2026-06-15
+last_edited: 2026-09-23
 ---
 
 # New Project
@@ -16,13 +16,13 @@ Create a project or experiment that agents can discover later.
 4. Run the helper when possible:
 
 ```sh
-python .codex/skills/new-project/scripts/new_project.py "Project Name" --summary "One-line summary"
+python .agents/skills/new-project/scripts/new_project.py "Project Name" --summary "One-line summary"
 ```
 
 For an experiment:
 
 ```sh
-python .codex/skills/new-project/scripts/new_project.py "Experiment Name" --type experiment --summary "One-line summary"
+python .agents/skills/new-project/scripts/new_project.py "Experiment Name" --type experiment --summary "One-line summary"
 ```
 
 5. Add project-specific commands, data sources, and safety gates to the generated `AGENTS.md` if they matter.

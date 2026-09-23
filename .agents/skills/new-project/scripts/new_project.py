@@ -15,6 +15,10 @@ def slugify(value: str) -> str:
     return slug or "new-project"
 
 
+def stamp(text: str, today: str) -> str:
+    return re.sub(r"^last_edited: .*$", f"last_edited: {today}", text, count=1, flags=re.M)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Create a project or experiment.")
     parser.add_argument("name")
@@ -49,9 +53,9 @@ def main() -> int:
     readme = template.read_text().replace("<Project Name>", args.name)
     readme = readme.replace("<Experiment Name>", args.name)
     readme = readme.replace("<Summary>", args.summary)
-    readme_path.write_text(readme)
+    readme_path.write_text(stamp(readme, today))
     if not args.no_agents:
-        agents_path.write_text((TEMPLATES / "PROJECT_AGENTS.md").read_text())
+        agents_path.write_text(stamp((TEMPLATES / "PROJECT_AGENTS.md").read_text(), today))
 
     print(f"created: {rel_path}")
     return 0

@@ -25,7 +25,7 @@ def build_note(name: str, role: str) -> str:
         role or "TBD",
     )
     note = note.replace("YYYY-MM-DD", today)
-    return note
+    return re.sub(r"^last_edited: .*$", f"last_edited: {today}", note, count=1, flags=re.M)
 
 
 def main() -> int:

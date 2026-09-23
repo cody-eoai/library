@@ -19,7 +19,7 @@ too short-lived to need one).
 3. Run the helper (shared with `new-project`, `--type experiment`):
 
 ```sh
-python .codex/skills/new-project/scripts/new_project.py "Experiment Name" --type experiment --summary "One-line summary" --no-agents
+python .agents/skills/new-project/scripts/new_project.py "Experiment Name" --type experiment --summary "One-line summary" --no-agents
 ```
 
 Drop `--no-agents` if this experiment is likely to graduate into a project
