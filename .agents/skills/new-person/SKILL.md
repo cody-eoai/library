@@ -1,27 +1,33 @@
 ---
 name: new-person
-description: Create or update a public-safe person note under `people/` from the repository's `people/person.md` template. Use when the user asks to add a collaborator, create a person profile, remember someone's preferences, make a people note, or bootstrap `people/<name>.md`.
-last_edited: 2026-09-23
+description: Create or update a public-safe note about a collaborator under people/ from a template. Use when the user asks to add a collaborator, create a person profile, remember someone's preferences or working style, or make a people note.
+metadata:
+  last_edited: 2026-09-23
 ---
 
 # New Person
 
-Create a durable, public-safe note for a human collaborator.
+Create a durable, public-safe note about a human collaborator.
 
 ## Workflow
 
-1. Read `people/README.md` and `people/person.md`.
-2. Choose a lowercase hyphenated slug from the person's name.
-3. Run the helper when possible:
+1. If the workspace has a `people/README.md`, read it for local rules.
+2. From the workspace root, run the script bundled with this skill:
 
 ```sh
-python .agents/skills/new-person/scripts/new_person.py "Person Name" --role "Role or context"
+python <this skill's folder>/scripts/new_person.py "Person Name" --role "Role or context"
 ```
 
-4. Edit the generated note with only useful, non-sensitive context.
-5. Keep private facts, secrets, health details, account data, and confidential content out of the note.
-6. Add or update `Last Verified` when facts may go stale.
+It creates `people/<slug>.md` from this skill's `assets/person.md`,
+stamped with today's date. It won't overwrite an existing note unless you
+pass `--force`.
+
+3. Fill in only useful, non-sensitive context: how you work together,
+   preferences, open threads.
+4. Keep secrets, account data, health details, and anything confidential
+   out of the note. These notes may be shared or committed.
 
 ## Output
 
-Report the created or updated path and summarize any fields still needing human input.
+Report the created or updated path and any fields that still need the
+user's input.

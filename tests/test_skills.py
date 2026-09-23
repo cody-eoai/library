@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-import json
 import re
+import sys
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "dist"))
+import build_skills  # noqa: E402
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SKILLS = ROOT / ".agents" / "skills"
 CLAUDE_SKILLS = ROOT / ".claude" / "skills"
@@ -18,13 +20,6 @@ TOOLING_DIRS = {".git", ".pytest_cache", ".venv", "node_modules"}
 def in_unstructured_dir(path: Path) -> bool:
     parts = path.relative_to(ROOT).parts
     return any(parts[: len(prefix)] == prefix for prefix in UNSTRUCTURED_DIRS)
-
-
-def locked_skill_names() -> set[str]:
-    lock_path = ROOT / "skills-lock.json"
-    if not lock_path.exists():
-        return set()
-    return set(json.loads(lock_path.read_text()).get("skills", {}))
 
 
 def frontmatter(path: Path) -> dict[str, object]:
@@ -61,18 +56,18 @@ def skill_dirs() -> list[Path]:
     return sorted(p for p in SKILLS.glob("*") if (p / "SKILL.md").exists())
 
 
-def test_skill_frontmatter_shape() -> None:
-    """Repo-native skills share one frontmatter shape. Skills listed in
-    skills-lock.json are vendored from elsewhere, so they're exempt."""
-    locked = locked_skill_names()
-    skill_files = [d / "SKILL.md" for d in skill_dirs() if d.name not in locked]
-    assert skill_files
-    for path in skill_files:
-        data = frontmatter(path)
-        assert set(data) == {"name", "description", "last_edited"}, path
-        assert isinstance(data["name"], str) and data["name"]
-        assert isinstance(data["description"], str) and data["description"]
-        assert DATE_RE.match(data["last_edited"]), path
+def test_skills_are_uploadable() -> None:
+    """Our own skills meet the Agent Skills rules Claude enforces on upload.
+    Skills listed in skills-lock.json are vendored, so they're exempt."""
+    skills = build_skills.skill_dirs()
+    assert skills
+    errors = [e for skill in skills for e in build_skills.validate(skill)]
+    assert not errors, "\n".join(errors)
+
+
+def test_skill_zips_are_up_to_date() -> None:
+    problems = build_skills.stale()
+    assert not problems, "\n".join(problems) + "\nRebuild with: python dist/build_skills.py"
 
 
 def test_every_skill_is_mirrored_for_claude_code() -> None:

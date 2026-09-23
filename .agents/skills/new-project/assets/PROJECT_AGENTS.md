@@ -1,0 +1,1 @@
+../../../../templates/PROJECT_AGENTS.md

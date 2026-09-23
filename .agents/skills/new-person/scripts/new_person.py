@@ -6,9 +6,7 @@ from datetime import date
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[4]
-PEOPLE_DIR = ROOT / "people"
-TEMPLATE = PEOPLE_DIR / "person.md"
+TEMPLATE = Path(__file__).absolute().parent.parent / "assets" / "person.md"
 
 
 def slugify(value: str) -> str:
@@ -17,9 +15,8 @@ def slugify(value: str) -> str:
 
 
 def build_note(name: str, role: str) -> str:
-    template = TEMPLATE.read_text()
     today = date.today().isoformat()
-    note = template.replace("<Person Name>", name)
+    note = TEMPLATE.read_text().replace("<Person Name>", name)
     note = note.replace(
         "What this person does or how they relate to this workspace.",
         role or "TBD",
@@ -34,17 +31,18 @@ def main() -> int:
     parser.add_argument("--role", default="")
     parser.add_argument("--slug", default="")
     parser.add_argument("--force", action="store_true")
+    parser.add_argument("--root", default=".", help="workspace root (default: current folder)")
     args = parser.parse_args()
 
-    slug = args.slug or slugify(args.name)
-    path = PEOPLE_DIR / f"{slug}.md"
+    root = Path(args.root).resolve()
+    path = root / "people" / f"{args.slug or slugify(args.name)}.md"
     if path.exists() and not args.force:
-        print(f"exists: {path.relative_to(ROOT)}")
+        print(f"exists: {path.relative_to(root)}")
         return 0
 
-    PEOPLE_DIR.mkdir(parents=True, exist_ok=True)
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(build_note(args.name, args.role))
-    print(f"created: {path.relative_to(ROOT)}")
+    print(f"created: {path.relative_to(root)}")
     return 0
 
 

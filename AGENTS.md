@@ -38,6 +38,8 @@ Codex, or anything else that reads `AGENTS.md`).
   `knowledge-base/inbox/` until the `librarian` skill files it.
 - `archive/`: finished or retired work, moved here rather than deleted.
 - `templates/`: starter files for everything above.
+- `dist/skills/`: the skills packaged as uploadable zips. Generated; never
+  edit by hand.
 - `tmp/`: gitignored scratch space. Move anything worth keeping out of it.
 
 Nothing durable lives loose at the repo root. If nothing above fits, ask
@@ -59,6 +61,18 @@ Skills live in `.agents/skills/<name>/` (Codex reads this folder
 directly). Claude Code reads `.claude/skills/`, which holds a symlink to
 each one. When you add a skill, link it:
 `ln -s ../../.agents/skills/<name> .claude/skills/<name>`.
+
+Each skill must also work uploaded on its own, without the repo:
+
+- Frontmatter uses only `name`, `description`, and `metadata` (dates go
+  under `metadata: last_edited:`), and the description has no `<` or `>`.
+- Files a skill needs from the repo go in its `assets/` as symlinks to the
+  originals (e.g. `assets/person.md -> ../../../../people/person.md`), so
+  there's still one copy.
+- Scripts read from their own `assets/` and write relative to the current
+  folder, never their own location.
+- After changing a skill, run `python dist/build_skills.py` to rebuild its
+  zip. The tests fail if a zip is stale.
 
 - `setup-library`: first-run setup for a fresh copy of this template.
 - `new-project`, `new-experiment`, `new-person`: create entries from

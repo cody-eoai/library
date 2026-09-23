@@ -6,8 +6,9 @@ from datetime import date
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[4]
-TEMPLATES = ROOT / "templates"
+# absolute(), not resolve(): new-experiment links to this file and should use
+# its own bundled assets, not new-project's.
+ASSETS = Path(__file__).absolute().parent.parent / "assets"
 
 
 def slugify(value: str) -> str:
@@ -26,36 +27,34 @@ def main() -> int:
     parser.add_argument("--summary", required=True)
     parser.add_argument("--slug", default="")
     parser.add_argument("--no-agents", action="store_true")
+    parser.add_argument("--root", default=".", help="workspace root (default: current folder)")
     args = parser.parse_args()
 
+    root = Path(args.root).resolve()
     today = date.today().isoformat()
-    base_slug = args.slug or slugify(args.name)
+    entry_id = args.slug or slugify(args.name)
     if args.type == "experiment":
-        entry_id = base_slug
         if not entry_id.startswith("exp-"):
             entry_id = f"exp-{entry_id}-{today}"
-        root_dir = ROOT / "experiments"
-        template = TEMPLATES / "experiment_README.md"
+        project_dir = root / "experiments" / entry_id
+        template = ASSETS / "experiment_README.md"
     else:
-        entry_id = base_slug
-        root_dir = ROOT / "projects"
-        template = TEMPLATES / "project_README.md"
+        project_dir = root / "projects" / entry_id
+        template = ASSETS / "project_README.md"
 
-    project_dir = root_dir / entry_id
-    readme_path = project_dir / "README.md"
-    agents_path = project_dir / "AGENTS.md"
-    rel_path = project_dir.relative_to(ROOT).as_posix()
-
+    rel_path = project_dir.relative_to(root).as_posix()
     if project_dir.exists():
         raise FileExistsError(f"path already exists: {rel_path}")
 
     project_dir.mkdir(parents=True)
-    readme = template.read_text().replace("<Project Name>", args.name)
-    readme = readme.replace("<Experiment Name>", args.name)
+    readme = template.read_text()
+    for placeholder in ("<Project Name>", "<Experiment Name>"):
+        readme = readme.replace(placeholder, args.name)
     readme = readme.replace("<Summary>", args.summary)
-    readme_path.write_text(stamp(readme, today))
+    (project_dir / "README.md").write_text(stamp(readme, today))
     if not args.no_agents:
-        agents_path.write_text(stamp((TEMPLATES / "PROJECT_AGENTS.md").read_text(), today))
+        agents = (ASSETS / "PROJECT_AGENTS.md").read_text()
+        (project_dir / "AGENTS.md").write_text(stamp(agents, today))
 
     print(f"created: {rel_path}")
     return 0
