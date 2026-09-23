@@ -49,16 +49,19 @@ cd library
 
 ### Option 2: download the zip (no git required)
 
+Easiest: on the repo's GitHub page, **Code → Download ZIP**.
+
+From a terminal, using GitHub's own archive endpoint (works for any branch,
+no extra tooling on GitHub's side to maintain):
+
 ```sh
-curl -L https://github.com/cody-eoai/library/releases/latest/download/library.zip -o library.zip
-unzip library.zip -d library
-cd library
+gh api repos/cody-eoai/library/zipball/main > library.zip
+unzip library.zip
+cd cody-eoai-library-*
 ```
 
-On macOS you can use `ditto -x -k library.zip library` instead of `unzip`.
-Every version tag (`vX.Y.Z`) repackages this zip via
-`.github/workflows/release.yml` — `releases/latest/download/library.zip`
-always points at the newest tagged release.
+(`gh` handles the download regardless of whether the repo is public or
+private. Once it's public, a plain `curl -L -o library.zip https://github.com/cody-eoai/library/archive/refs/heads/main.zip` works too, no auth needed.)
 
 Either way: open the folder in Claude Code or Codex and start working —
 both read `AGENTS.md` from the root.
@@ -116,8 +119,6 @@ Four skills ship with this template, all already wired up:
   `related` link is recorded on both sides.
 - `.agents/`, `.codex/`, `.claude/`: skills, per the "Adding skills" section
   above.
-- `.github/workflows/release.yml`: packages `library.zip` on every version
-  tag — what Option 2 above downloads.
 
 ## Credit
 
